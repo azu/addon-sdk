@@ -1,4 +1,5 @@
-(function(global){
+
+const renderDocumentationJSON = (function(){
 
 function _indefiniteArticle(str) {
   // If str is upper case, assume it's an acronym and use "a".
@@ -62,7 +63,7 @@ function _createDescription(doc){
 
 function _createReturns(doc){
   var $ret = $("<div class='returns'/>")
-    .html( "Returns " + "<span class='type'>" + doc.returns.type + "</span>" );
+    .html( "Returns <span class='type'>" + doc.returns.type + "</span>" );
 
   if( doc.returns.description )
     $("<div class='description'/>").text( doc.returns.description ).appendTo($ret);
@@ -112,8 +113,7 @@ function _createParams(doc){
 }
 
 
-function render(doc, $where){
-  var $home = $where;
+return function render(doc, $home){
   $home.html("");
   if ($home.length == 0)
     return;
@@ -129,7 +129,4 @@ function render(doc, $where){
     $(this).html( markdownToHtml(text) );
   });
 }
-
-global.renderDocumentationJSON = render;
-    
-})(this);
+})();

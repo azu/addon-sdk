@@ -3,10 +3,19 @@ function startApp(jQuery, window) {
   var document = window.document;
   var packages = null;
   var currentHash = "";
+  var pkgFileUrlAry = ["packages/",, "/",];
+  var viewSource = document.getElementById('view-source');
 
   const DEFAULT_HASH = "guide/getting-started";
   const IDLE_PING_DELAY = 500;
   const CHECK_HASH_DELAY = 100;
+  const JS_FILE_REGEXP = /.*\.js$/;
+
+  const TEMPLATE_MOD_PARSE_ERR = $("#templates .module-parse-error");
+  const TEMPLATE_MOD_DETAIL = $("#templates .module-detail");
+  const TEMPLATE_PKG_DETAIL = $("#templates .package-detail");
+  const TEMPLATE_PKG_ENTRY = $("#templates .package-entry");
+  const TEMPLATE_GUIDE_SEC = $("#templates .guide-section");
 
   function checkHash() {
     var hash = window.location.hash;
@@ -38,7 +47,7 @@ function startApp(jQuery, window) {
   function getModules(fileStruct) {
     var modules = [];
     for (var name in fileStruct) {
-      if (name.match(/.*\.js$/))
+      if (name.match(JS_FILE_REGEXP))
         modules.push(name.slice(0, -3));
       else if (!('size' in fileStruct[name])) {
         var subModules = getModules(fileStruct[name]);
@@ -52,13 +61,15 @@ function startApp(jQuery, window) {
   }
 
   function pkgFileUrl(pkg, filename) {
-    return "packages/" + pkg.name + "/" + filename;
+    pkgFileUrlAry[1] = pkg.name;
+    pkgFileUrlAry[3] = filename;
+    return pkgFileUrlAry.join("");
   }
 
   function pkgHasFile(pkg, filename) {
     var parts = filename.split("/");
     var dirNames = parts.slice(0, -1);
-    var filePart = parts.slice(-1)[0];
+    var filePart = parts[parts.length - 1];
     var dir = pkg.files;
     for (var i = 0; i < dirNames.length; i++) {
       if (dirNames[i] in dir && !('size' in dir[dirNames[i]]))
@@ -82,11 +93,10 @@ function startApp(jQuery, window) {
     $(where).empty();
     function render_hunk (hunk) {
       if (hunk[0] == "markdown") {
-        var nh = $("<span>" + markdownToHtml(hunk[1]) + "</span>");
-        nh.appendTo(where);
+        $("<span>" + markdownToHtml(hunk[1]) + "</span>").appendTo(where);
       } else if (hunk[0] == "api-json") {
-        var $el = $("<div class='api'/>").appendTo(where);
-        renderDocumentationJSON(hunk[1], $el);
+        renderDocumentationJSON(
+          hunk[1], $("<div class='api'/>").appendTo(where));
       }
     }
     hunks.forEach(render_hunk);
@@ -94,7 +104,7 @@ function startApp(jQuery, window) {
 
   function getPkgFile(pkg, filename, filter, cb) {
     if (pkgHasFile(pkg, filename)) {
-      var options = {
+      jQuery.ajax({
         url: pkgFileUrl(pkg, filename),
         dataType: "text",
         success: function(text) {
@@ -109,14 +119,13 @@ function startApp(jQuery, window) {
         error: function() {
           cb(null);
         }
-      };
-      jQuery.ajax(options);
+      });
     } else
       cb(null);
   }
 
   function onPkgAPIError(req, where, source_filename) {
-    var errorDisplay = $("#templates .module-parse-error").clone();
+    var errorDisplay = TEMPLATE_MOD_PARSE_ERR.clone();
     errorDisplay.find(".filename").text(source_filename);
     errorDisplay.find(".technical-error").text(req.responseText);
     where.empty().append(errorDisplay);
@@ -126,7 +135,7 @@ function startApp(jQuery, window) {
 
   function renderPkgAPI(pkg, source_filename, json_filename, where, donecb) {
     if (pkgHasFile(pkg, source_filename)) {
-      var options = {
+      jQuery.ajax({
         url: pkgFileUrl(pkg, json_filename),
         dataType: "json",
         success: function(json) {
@@ -141,31 +150,31 @@ function startApp(jQuery, window) {
           onPkgAPIError(req, where, source_filename);
           donecb("show_error");
         }
-      };
-      jQuery.ajax(options);
+      });
     } else {
       donecb(null);
     }
   }
 
   function showSidenotes(query) {
-    var width = $("#sidenotes").innerWidth();
+    var sidenotes = $("#sidenotes");
+    var width = sidenotes.innerWidth();
     var asides = query.find(".aside");
     var newAsides = $("<div></div>");
-    $("#sidenotes").empty();
+    sidenotes.empty();
     asides.each(
       function() {
-        var pos = $(this).position();
-        $(this).remove();
+        var aside = $(this);
+        var pos = aside.position();
+        aside.remove();
         newAsides.append(this);
         $(this).css({top: pos.top});
       });
-    $("#sidenotes").append(newAsides);
+    sidenotes.append(newAsides);
     newAsides.children().each(
       function() {
         $(this).width(width);
-        var margin = $(this).outerWidth() - width;
-        $(this).width(width - margin);
+        $(this).width(2*width - $(this).outerWidth());
       });
   }
 
@@ -196,11 +205,8 @@ function startApp(jQuery, window) {
   function showMainContent(query, url) {
     if (queuedContent != query)
       return;
-    if (url)
-      $("#view-source").attr("href", url);
-    else
-      // TODO: This actually just results in a 404.
-      $("#view-source").attr("href", "");
+    // TODO: !url actually just results in a 404.
+    viewSource.setAttribute("href", url || "");
     $("#main-content").fadeIn(400);
     fixInternalLinkTargets(query);
     showSidenotes(query);
@@ -209,9 +215,9 @@ function startApp(jQuery, window) {
 
   function showModuleDetail(pkgName, moduleName) {
     var pkg = packages[pkgName];
-    var entry = $("#templates .module-detail").clone();
+    var entry = TEMPLATE_MOD_DETAIL.clone();
     var source_filename = "docs/" + moduleName + ".md";
-    var json_filename = "docs/" + moduleName + ".md.json";
+    var json_filename = source_filename + ".json";
 
     entry.find(".name").text(moduleName);
     queueMainContent(entry, function () {
@@ -251,7 +257,7 @@ function startApp(jQuery, window) {
 
   function showPackageDetail(name) {
     var pkg = packages[name];
-    var entry = $("#templates .package-detail").clone();
+    var entry = TEMPLATE_PKG_DETAIL.clone();
     var filename = "README.md";
 
     var authors = [];
@@ -313,7 +319,7 @@ function startApp(jQuery, window) {
     sortedPackages.forEach(
       function(name) {
         var pkg = packages[name];
-        var entry = $("#templates .package-entry").clone();
+        var entry = TEMPLATE_PKG_ENTRY.clone();
         var hash = "#package/" + pkg.name;
         entry.find(".name").text(pkg.name).attr("href", hash);
         entry.find(".description").text(pkg.description);
@@ -344,12 +350,12 @@ function startApp(jQuery, window) {
   }
 
   function showGuideDetail(name) {
-    var entry = $("#templates .guide-section").clone();
+    var entry = TEMPLATE_GUIDE_SEC.clone();
     var url = "md/dev-guide/" + name + ".md";
 
     entry.find(".name").text($("#dev-guide-toc #" + name).text());
     queueMainContent(entry, function () {
-      var options = {
+      jQuery.ajax({
         url: url,
         dataType: "text",
         success: function(text) {
@@ -359,8 +365,7 @@ function startApp(jQuery, window) {
         error: function(text) {
           showMainContent(entry);
         }
-      };
-      jQuery.ajax(options);
+      });
     });
   }
 
