@@ -13,6 +13,7 @@
 .api>.params, .api>.returns{ background-color: #EEE; margin:3px; }
 .api>.params>.param, .api .prop{ padding: 3px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,.3);}
 .api>.params>.param>span:not(.description), .api .prop>span:not(.description){ display:inline-block; width:120px; vertical-align:top; overflow: hidden;}
+.api>.params>.param>span.type, .api .prop>span.type{ width:240px; }
       
 .api>.params>.param>.prop{ padding-left: 10px;}
 .api .param>.description, .api .prop>.description{ width: 300px; display:inline-block;vertical-align:top;}
