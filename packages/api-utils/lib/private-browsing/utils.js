@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 'use strict';
 
 module.metadata = {
@@ -13,7 +12,10 @@ const { defer } = require('api-utils/functional');
 const observers = require('api-utils/observer-service');
 const { emit, on, once, off } = require('api-utils/event/core');
 const { when: unload } = require('api-utils/unload');
-const { getWindowLoadingContext } = require('api-utils/window/utils');
+const {
+  getWindowLoadingContext,
+  windows
+} = require('api-utils/window/utils');
 
 let deferredEmit = defer(emit);
 
@@ -42,6 +44,18 @@ let isWindowPBEnabled = function isWindowPBEnabled(chromeWin) {
 }
 exports.isWindowPBEnabled = isWindowPBEnabled;
 
+function getPBWindows() {
+  return windows().filter(function(window) {
+    return isWindowPrivateBrowsing(window);
+  })
+}
+exports.getPBWindows = getPBWindows;
+
+function isWindowPrivateBrowsing (chromeWin) {
+  return isWindowPBEnabled(chromeWin) &&
+         getWindowLoadingContext(chromeWin).usePrivateBrowsing;
+}
+
 // We toggle private browsing mode asynchronously in order to work around
 // bug 659629.  Since private browsing transitions are asynchronous
 // anyway, this doesn't significantly change the behavior of the API.
@@ -59,8 +73,15 @@ let setMode = defer(function setMode(value, chromeWin) {
 exports.setMode = setMode;
 
 let getMode = function getMode(chromeWin) {
-  if (isWindowPBEnabled(chromeWin))
-    return getWindowLoadingContext(chromeWin).usePrivateBrowsing;
+  if (chromeWin) {
+    if (isWindowPrivateBrowsing(chromeWin))
+      return true;
+  }
+  else {
+    // if any window is in pb mode then return true
+    if (getPBWindows().length)
+      return true;
+  }
 
   // default
   return pbService ? pbService.privateBrowsingEnabled : false;

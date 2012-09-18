@@ -6,7 +6,10 @@
 let pb = require("private-browsing");
 let {Cc,Ci} = require("chrome");
 const { Loader } = require('test-harness/loader');
-const timer = require("timer");
+const { setTimeout } = require("timer");
+const pbUtils = require('api-utils/private-browsing/utils');
+const wm = Cc["@mozilla.org/appshell/window-mediator;1"].
+           getService(Ci.nsIWindowMediator);
 
 let pbService;
 // Currently, only Firefox implements the private browsing service.
@@ -91,7 +94,7 @@ if (pbService) {
     // is correctly destroyed
     pb.activate();
     pb.once("start", function onStart() {
-      timer.setTimeout(function () {
+      setTimeout(function () {
         test.assert(!called, 
           "First private browsing instance is destroyed and inactive");
 
@@ -203,3 +206,35 @@ else {
                      "pb.isActive returns false when private browsing isn't supported");
   };
 }
+
+exports.testGetIsActive_new = function (test) {
+  test.waitUntilDone();
+
+  let activeWindow =  wm.getMostRecentWindow("navigator:browser");
+
+  // is per-window PB implemented?
+  if (pbUtils.isWindowPBEnabled(activeWindow)) {
+    test.assertEqual(pb.isActive, false,
+                     "private-browsing.isActive is correct");
+
+    pbUtils.setMode(true, activeWindow);
+
+    setTimeout(function() {
+      test.assert(pb.isActive,
+                  "private-browsing.isActive is correct");
+      test.assertEqual(pbUtils.getMode(activeWindow), true,
+                       "window is in PB mode");
+
+      // Switch back to normal mode.
+      pbUtils.setMode(false, activeWindow);
+      setTimeout(function() {
+        test.assertEqual(pb.isActive, false,
+                         "private-browsing.isActive is correct");
+        test.done();
+      }, 0);
+    }, 0);
+  }
+  else {
+    test.done();
+  }
+};
