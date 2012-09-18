@@ -5,22 +5,25 @@
 <!-- contributed by Paul O'Shannessy [paul@oshannessy.com]  -->
 <!-- edited by Noelle Murata [fiveinchpixie@gmail.com]  -->
 <!-- contributed by Irakli Gozalishvili [gozala@mozilla.com] -->
+<!-- contributed by Erik Vold [evold@mozilla.com] -->
 
 The `private-browsing` module allows you to access Firefox's private browsing
 mode, detecting if it is active and when its state changes.
 
 This module is available in all applications. However, only Firefox will ever
 transition into or out of private browsing mode. For all other applications,
-`pb.isActive` will always be `false`, and none of the events will be emitted.
+`pb.isActive` will always be `false`, `activate` and `deactivate` won't 
+have an effect, and none of the events will be emitted.
 
 <api name="isActive">
 @property {boolean}
-  This read-only boolean is true if private browsing mode is turned on.
+  This read-only boolean is true if the older global private browsing mode is 
+  enabled or if any window has private browsing enabled.
 </api>
 
 <api name="activate">
 @function
-  Turns on private browsing mode.
+  Turns on private browsing mode, if possible.
 </api>
 
 <api name="deactivate">
