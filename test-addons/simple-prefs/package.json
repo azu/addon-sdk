@@ -1,0 +1,12 @@
+{
+  "id": "test-simple-prefs",
+  "name": "test-simple-prefs",
+  "author": "Erik Vold",
+  "license": "MPL 2.0",
+  "preferences": [{
+    "name": "string",
+    "type": "string",
+    "value": "test",
+    "title": "Test String"
+  }]
+}
