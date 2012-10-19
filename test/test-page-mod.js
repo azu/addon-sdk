@@ -12,7 +12,7 @@ const timer = require("sdk/timers");
 const { Cc, Ci } = require("chrome");
 const { open } = require('sdk/window/utils');
 const windowUtils = require('sdk/deprecated/window-utils');
-const { getTabContentWindow, getActiveTab } = require('sdk/tabs/utils');
+const { getTabContentWindow, getSelectedTab } = require('sdk/tabs/utils');
 
 /* XXX This can be used to delay closing the test Firefox instance for interactive
  * testing or visual inspection. This test is registered first so that it runs
@@ -370,8 +370,7 @@ exports.testWorksWithExistingTabs = function(test) {
         onAttach: function(worker) {
           test.assertEqual(tab, worker.tab, "A worker has been created on this existing tab");
           pageMod.destroy();
-          tab.close();
-          test.done();
+          tab.close(function() test.done());
         }
       });
     }
@@ -761,7 +760,7 @@ exports.testPageModCssAutomaticDestroy = function(test) {
 
     onReady: function onReady(tab) {
       let browserWindow = windowUtils.activeBrowserWindow;
-      let win = getTabContentWindow(getActiveTab(browserWindow));
+      let win = getTabContentWindow(getSelectedTab(browserWindow));
 
       let div = win.document.querySelector("div"),
           style = win.getComputedStyle(div);
