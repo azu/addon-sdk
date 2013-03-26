@@ -7,8 +7,8 @@ const { Loader, LoaderWithHookedConsole } = require("sdk/test/loader");
 const { browserWindows } = require('sdk/windows');
 const tabs = require('sdk/tabs');
 const { isPrivate } = require('sdk/private-browsing');
-const { openDialog } = require('sdk/window/utils');
-const { isWindowPrivate } = require('sdk/window/utils');
+const { openDialog, isWindowPrivate, getMostRecentBrowserWindow } = require('sdk/window/utils');
+const { openTab, closeTab } = require('sdk/tabs/utils');
 const { setTimeout } = require('sdk/timers');
 const { openWebpage } = require('./private-browsing/helper');
 const { isTabPBSupported, isWindowPBSupported } = require('sdk/private-browsing/utils');
@@ -380,4 +380,27 @@ exports.testImmediateClosing = function (test) {
       });
     }
   });
+}
+
+exports.testTabsReadyEventFiresForOpenTabs = function(test) {
+  test.waitUntilDone();
+  let loader = Loader(module);
+  let tabs = loader.require('sdk/tabs');
+  let url = URL.replace("#title#", "testTabsReadyEventFiresForOpenTabs");
+
+  test.assertEqual(tabs.length, 1, 'there is one tab open');
+
+  tabs.once('ready', function onReady(tab) {
+    if (url === tab.url) {
+      tab.once('close', function() {
+        test.assertEqual(tabs.length, 1, 'there is one tab open');
+        loader.unload();
+        test.done();
+      });
+
+      closeTab(tab);
+    }
+  });
+
+  tabs.open({url: url});
 }
