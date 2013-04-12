@@ -166,7 +166,7 @@ parser_groups = (
                                            " Firefox with the one from your SDK"
                                            " repository"),
                                      action="store_true",
-                                     default=False,
+                                     default=True,
                                      cmds=['run', 'test', 'testex', 'testpkgs',
                                            'testall'])),
         (("", "--strip-sdk",), dict(dest="bundle_sdk",
