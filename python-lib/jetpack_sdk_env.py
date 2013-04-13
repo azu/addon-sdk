@@ -60,7 +60,7 @@ def welcome():
         print ("Your SDK may not work properly.")
         return
 
-    print ("Welcome to the Add-on SDK. Run 'cfx docs' for assistance.")
+    print ("Welcome to the Add-on Pathfinder. Run 'cfx docs' for assistance.")
 
 if __name__ == '__main__':
     welcome()
