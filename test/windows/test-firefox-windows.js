@@ -11,9 +11,9 @@ const { open, close, focus } = require('sdk/window/helpers');
 const { browserWindows } = require("sdk/windows");
 const tabs = require("sdk/tabs");
 const winUtils = require("sdk/deprecated/window-utils");
-const { WindowTracker } = winUtils;
 const { isPrivate } = require('sdk/private-browsing');
 const { isWindowPBSupported } = require('sdk/private-browsing/utils');
+const { WindowTracker } = require("sdk/window/tracker");
 
 // TEST: open & close window
 exports.testOpenAndCloseWindow = function(test) {
