@@ -3,30 +3,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// @see http://mxr.mozilla.org/mozilla-central/source/js/src/xpconnect/loader/mozJSComponentLoader.cpp
-
 'use strict';
-
-// IMPORTANT: Avoid adding any initialization tasks here, if you need to do
-// something before add-on is loaded consider addon/runner module instead!
 
 const { classes: Cc, Constructor: CC, interfaces: Ci, utils: Cu,
         results: Cr, manager: Cm } = Components;
-const ioService = Cc['@mozilla.org/network/io-service;1'].
-                  getService(Ci.nsIIOService);
-const resourceHandler = ioService.getProtocolHandler('resource').
-                        QueryInterface(Ci.nsIResProtocolHandler);
-const systemPrincipal = CC('@mozilla.org/systemprincipal;1', 'nsIPrincipal')();
-const scriptLoader = Cc['@mozilla.org/moz/jssubscript-loader;1'].
-                     getService(Ci.mozIJSSubScriptLoader);
-const prefService = Cc['@mozilla.org/preferences-service;1'].
-                    getService(Ci.nsIPrefService).
-                    QueryInterface(Ci.nsIPrefBranch);
-const appInfo = Cc["@mozilla.org/xre/app-info;1"].
-                getService(Ci.nsIXULAppInfo);
-const vc = Cc["@mozilla.org/xpcom/version-comparator;1"].
-           getService(Ci.nsIVersionComparator);
 
+Cu.import('resource://gre/modules/Services.jsm');
+
+const resourceHandler = Services.io.getProtocolHandler('resource').
+                        QueryInterface(Ci.nsIResProtocolHandler);
 
 const REASON = [ 'unknown', 'startup', 'shutdown', 'enable', 'disable',
                  'install', 'uninstall', 'upgrade', 'downgrade' ];
@@ -36,13 +21,11 @@ const bind = Function.call.bind(Function.bind);
 let loader = null;
 let unload = null;
 let cuddlefishSandbox = null;
-let nukeTimer = null;
 
 // Utility function that synchronously reads local resource from the given
 // `uri` and returns content string.
 function readURI(uri) {
-  let ioservice = Cc['@mozilla.org/network/io-service;1'].
-    getService(Ci.nsIIOService);
+  let ioservice = Services.io;
   let channel = ioservice.newChannel(uri, 'UTF-8', null);
   let stream = channel.open();
 
@@ -105,7 +88,7 @@ function startup(data, reasonCode) {
       replace(uuidRe, '$1');
 
     let prefixURI = 'resource://' + domain + '/';
-    let resourcesURI = ioService.newURI(rootURI + '/resources/', null, null);
+    let resourcesURI = Services.io.newURI(rootURI + '/resources/', null, null);
     resourceHandler.setSubstitution(domain, resourcesURI);
 
     // Create path to URLs mapping supported by loader.
@@ -128,32 +111,9 @@ function startup(data, reasonCode) {
     if (name == 'addon-sdk')
       paths['tests/'] = prefixURI + name + '/tests/';
 
-    let useBundledSDK = options['force-use-bundled-sdk'];
-    if (!useBundledSDK) {
-      try {
-        useBundledSDK = prefService.getBoolPref("extensions.addon-sdk.useBundledSDK");
-      }
-      catch (e) {
-        // Pref doesn't exist, allow using Firefox shipped SDK
-      }
-    }
-
-    // Starting with Firefox 21.0a1, we start using modules shipped into firefox
-    // Still allow using modules from the xpi if the manifest tell us to do so.
-    // And only try to look for sdk modules in xpi if the xpi actually ship them
-    if (options['is-sdk-bundled'] &&
-        (vc.compare(appInfo.version, '21.0a1') < 0 || useBundledSDK)) {
-      // Maps sdk module folders to their resource folder
-      paths[''] = prefixURI + 'addon-sdk/lib/';
-      // test.js is usually found in root commonjs or SDK_ROOT/lib/ folder,
-      // so that it isn't shipped in the xpi. Keep a copy of it in sdk/ folder
-      // until we no longer support SDK modules in XPI:
-      paths['test'] = prefixURI + 'addon-sdk/lib/sdk/test.js';
-    }
-
     // Retrieve list of module folder overloads based on preferences in order to
     // eventually used a local modules instead of files shipped into Firefox.
-    let branch = prefService.getBranch('extensions.modules.' + id + '.path');
+    let branch = Services.prefs.getBranch('extensions.modules.' + id + '.path');
     paths = branch.getChildList('', {}).reduce(function (result, name) {
       // Allows overloading of any sub folder by replacing . by / in pref name
       let path = name.substr(1).split('.').join('/');
@@ -168,7 +128,7 @@ function startup(data, reasonCode) {
 
       // Maps the given file:// URI to a resource:// in order to avoid various
       // failure that happens with file:// URI and be close to production env
-      let resourcesURI = ioService.newURI(fileURI, null, null);
+      let resourcesURI = Services.io.newURI(fileURI, null, null);
       let resName = 'extensions.modules.' + domain + '.commonjs.path' + name;
       resourceHandler.setSubstitution(resName, resourcesURI);
 
@@ -247,7 +207,8 @@ function startup(data, reasonCode) {
       main: main,
       prefsURI: rootURI + 'defaults/preferences/prefs.js'
     });
-  } catch (error) {
+  }
+  catch (error) {
     dump('Bootstrap error: ' +
          (error.message ? error.message : String(error)) + '\n' +
          (error.stack || error.fileName + ': ' + error.lineNumber) + '\n');
@@ -262,7 +223,7 @@ function loadSandbox(uri) {
       ChromeWorker: ChromeWorker
     }
   };
-  let sandbox = Cu.Sandbox(systemPrincipal, proto);
+  let sandbox = Cu.Sandbox(Services.scriptSecurityManager.getSystemPrincipal(), proto);
   // Create a fake commonjs environnement just to enable loading loader.js
   // correctly
   sandbox.exports = {};
@@ -275,7 +236,7 @@ function loadSandbox(uri) {
       CC: bind(CC, Components), components: Components,
       ChromeWorker: ChromeWorker });
   };
-  scriptLoader.loadSubScript(uri, sandbox, 'UTF-8');
+  Services.scriptloader.loadSubScript(uri, sandbox, 'UTF-8');
   return sandbox;
 }
 
@@ -284,6 +245,7 @@ function unloadSandbox(sandbox) {
     Cu.nukeSandbox(sandbox);
 }
 
+let nukeTimer = null;
 function setTimeout(callback, delay) {
   let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
   timer.initWithCallback({ notify: callback }, delay,
@@ -311,11 +273,13 @@ function shutdown(data, reasonCode) {
 
 function nukeModules() {
   nukeTimer = null;
+
   // module objects store `exports` which comes from sandboxes
   // We should avoid keeping link to these object to avoid leaking sandboxes
   for (let key in loader.modules) {
     delete loader.modules[key];
   }
+
   // Direct links to sandboxes should be removed too
   for (let key in loader.sandboxes) {
     let sandbox = loader.sandboxes[key];
@@ -328,7 +292,6 @@ function nukeModules() {
   // both `toolkit/loader` and `system/xul-app` are loaded as JSM's via
   // `cuddlefish.js`, and needs to be unloaded to avoid memory leaks, when
   // the addon is unload.
-
   unloadSandbox(cuddlefishSandbox.loaderSandbox);
   unloadSandbox(cuddlefishSandbox.xulappSandbox);
 
