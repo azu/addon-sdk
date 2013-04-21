@@ -10,6 +10,17 @@ let chrome = require('chrome');
 const FIXTURES_URL = module.uri.substr(0, module.uri.lastIndexOf('/') + 1) +
                      'fixtures/chrome-worker/'
 
+// Test Bug 636145
+exports["test Components access"] = function (assert) {
+  try {
+    Components;
+    assert.fail('should not be here');
+  }
+  catch(e) {
+    assert.ok(e.message.match(/Components is not defined/));
+  }
+}
+
 exports['test addEventListener'] = function(assert, done) {
   let uri = FIXTURES_URL + 'addEventListener.js';
 

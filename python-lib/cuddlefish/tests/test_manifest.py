@@ -205,53 +205,5 @@ class Chrome(unittest.TestCase, Extra):
         self.failUnlessKeysAre(requires, [])
         self.failUnlessEqual((problems,err), (False, []))
 
-class BadChrome(unittest.TestCase, Extra):
-    def test_bad_alias(self):
-        # using Components.* gets you an error, with a message that teaches
-        # you the correct approach.
-        mod = """let Cc = Components.classes;
-        let Cu = Components.utils;
-        """
-        requires, problems, err = scan2(mod)
-        self.failUnlessKeysAre(requires, [])
-        self.failUnlessEqual(problems, True)
-        self.failUnlessEqual(err[1], "The following lines from file fake.js:\n")
-        self.failUnlessEqual(err[2], "   1: let Cc = Components.classes;\n")
-        self.failUnlessEqual(err[3], "   2: let Cu = Components.utils;\n")
-        self.failUnlessEqual(err[4], "use 'Components' to access chrome authority. To do so, you need to add a\n")
-        self.failUnlessEqual(err[5], "line somewhat like the following:\n")
-        self.failUnlessEqual(err[7], '  const {Cc,Cu} = require("chrome");\n')
-        self.failUnlessEqual(err[9], "Then you can use any shortcuts to its properties that you import from the\n")
-
-    def test_bad_misc(self):
-        # If it looks like you're using something that doesn't have an alias,
-        # the warning also suggests a better way.
-        mod = """if (Components.isSuccessCode(foo))
-        """
-        requires, problems, err = scan2(mod)
-        self.failUnlessKeysAre(requires, [])
-        self.failUnlessEqual(problems, True)
-        self.failUnlessEqual(err[1], "The following lines from file fake.js:\n")
-        self.failUnlessEqual(err[2], "   1: if (Components.isSuccessCode(foo))\n")
-        self.failUnlessEqual(err[3], "use 'Components' to access chrome authority. To do so, you need to add a\n")
-        self.failUnlessEqual(err[4], "line somewhat like the following:\n")
-        self.failUnlessEqual(err[6], '  const {components} = require("chrome");\n')
-        self.failUnlessEqual(err[8], "Then you can use any shortcuts to its properties that you import from the\n")
-
-    def test_chrome_components(self):
-        # Bug 636145/774636: We no longer tolerate usages of "Components",
-        # even when adding `require("chrome")` to your module.
-        mod = """require("chrome");
-        var ios = Components.classes['@mozilla.org/network/io-service;1'];"""
-        requires, problems, err = scan2(mod)
-        self.failUnlessKeysAre(requires, ["chrome"])
-        self.failUnlessEqual(problems, True)
-        self.failUnlessEqual(err[1], "The following lines from file fake.js:\n")
-        self.failUnlessEqual(err[2], "   2: var ios = Components.classes['@mozilla.org/network/io-service;1'];\n")
-        self.failUnlessEqual(err[3], "use 'Components' to access chrome authority. To do so, you need to add a\n")
-        self.failUnlessEqual(err[4], "line somewhat like the following:\n")
-        self.failUnlessEqual(err[6], '  const {Cc} = require("chrome");\n')
-        self.failUnlessEqual(err[8], "Then you can use any shortcuts to its properties that you import from the\n")
-
 if __name__ == '__main__':
     unittest.main()

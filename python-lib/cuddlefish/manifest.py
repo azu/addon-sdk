@@ -708,49 +708,6 @@ OTHER_CHROME = re.compile(r"Components\.[a-zA-Z]")
 
 def scan_for_bad_chrome(fn, lines, stderr):
     problems = False
-    old_chrome = set() # i.e. "Cc" when we see "Components.classes"
-    old_chrome_lines = [] # list of (lineno, line.strip()) tuples
-    for lineno,line in enumerate(lines):
-        # note: this scanner is not obligated to spot all possible forms of
-        # chrome access. The scanner is detecting voluntary requests for
-        # chrome. Runtime tools will enforce allowance or denial of access.
-        line = line.strip()
-        iscomment = False
-        for commentprefix in COMMENT_PREFIXES:
-            if line.startswith(commentprefix):
-                iscomment = True
-                break
-        if iscomment:
-            continue
-        old_chrome_in_this_line = set()
-        for (regexp,alias) in CHROME_ALIASES:
-            if regexp.search(line):
-                old_chrome_in_this_line.add(alias)
-        if not old_chrome_in_this_line:
-            if OTHER_CHROME.search(line):
-                old_chrome_in_this_line.add("components")
-        old_chrome.update(old_chrome_in_this_line)
-        if old_chrome_in_this_line:
-            old_chrome_lines.append( (lineno+1, line) )
-
-    if old_chrome:
-        print >>stderr, """
-The following lines from file %(fn)s:
-%(lines)s
-use 'Components' to access chrome authority. To do so, you need to add a
-line somewhat like the following:
-
-  const {%(needs)s} = require("chrome");
-
-Then you can use any shortcuts to its properties that you import from the
-'chrome' module ('Cc', 'Ci', 'Cm', 'Cr', and 'Cu' for the 'classes',
-'interfaces', 'manager', 'results', and 'utils' properties, respectively. And
-`components` for `Components` object itself).
-""" % { "fn": fn, "needs": ",".join(sorted(old_chrome)),
-        "lines": "\n".join([" %3d: %s" % (lineno,line)
-                            for (lineno, line) in old_chrome_lines]),
-        }
-        problems = True
     return problems
 
 def scan_module(fn, lines, stderr=sys.stderr):
