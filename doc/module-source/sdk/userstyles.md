@@ -1,3 +1,6 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!-- contributed by Erik Vold [erikvvold@gmail.com]  -->
 
 The `userstyles` module allows one to load css/userstyles for content or chrome
