@@ -24,6 +24,12 @@ def mkzipdir(zf, path):
 def build_xpi(template_root_dir, manifest, xpi_path,
               harness_options, limit_to=None, extra_harness_options={},
               bundle_sdk=True):
+    IGNORED_FILES = [".hgignore", ".DS_Store", "install.rdf",
+                     "application.ini", xpi_path]
+
+    files_to_copy = {} # maps zipfile path to local-disk abspath
+    dirs_to_create = set() # zipfile paths, no trailing slash
+
     zf = zipfile.ZipFile(xpi_path, "w", zipfile.ZIP_DEFLATED)
 
     open('.install.rdf', 'w').write(str(manifest))
@@ -38,6 +44,27 @@ def build_xpi(template_root_dir, manifest, xpi_path,
     if 'icon64' in harness_options:
         zf.write(str(harness_options['icon64']), 'icon64.png')
         del harness_options['icon64']
+
+    # chrome.manifest
+    if os.path.isfile(os.path.join('chrome.manifest')):
+      zf.write(str('chrome.manifest'), 'chrome.manifest')
+
+    # chrome:// folders
+    for folder in ['content', 'skin']:
+      if os.path.exists(os.path.join(folder)):
+        zf.write(str(folder), folder)
+        # cp -r folder
+        abs_dirname = os.path.join(folder)
+        for dirpath, dirnames, filenames in os.walk(abs_dirname):
+            goodfiles = list(filter_filenames(filenames, IGNORED_FILES))
+            dirnames[:] = filter_dirnames(dirnames)
+            for filename in goodfiles:
+                abspath = os.path.join(dirpath, filename)
+                arcpath = ZIPSEP.join(
+                    [folder,
+                     make_zipfile_path(abs_dirname, os.path.join(dirpath, filename)),
+                     ])
+                files_to_copy[str(arcpath)] = str(abspath)
 
     # Handle simple-prefs
     if 'preferences' in harness_options:
@@ -62,12 +89,6 @@ def build_xpi(template_root_dir, manifest, xpi_path,
     zf.write('.prefs.js', 'defaults/preferences/prefs.js')
     os.remove('.prefs.js')
 
-
-    IGNORED_FILES = [".hgignore", ".DS_Store", "install.rdf",
-                     "application.ini", xpi_path]
-
-    files_to_copy = {} # maps zipfile path to local-disk abspath
-    dirs_to_create = set() # zipfile paths, no trailing slash
 
     for dirpath, dirnames, filenames in os.walk(template_root_dir):
         filenames = list(filter_filenames(filenames, IGNORED_FILES))
