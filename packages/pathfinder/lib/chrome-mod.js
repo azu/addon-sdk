@@ -1,22 +1,18 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-"use strict";
+'use strict';
 
-const { Trait } = require("api-utils/traits");
-const observers = require("api-utils/observer-service");
+const { Cc, Ci } = require('chrome');
+const { Trait } = require("sdk/deprecated/traits");
+const { on, off } = require('sdk/system/observer');
 const { Worker, Loader } = require('api-utils/content');
-const { EventEmitter } = require('api-utils/events');
-const { WindowTrackerTrait, windowIterator } = require('api-utils/window-utils');
-const { Cc, Ci } = require("chrome");
+const { EventEmitter } = require('sdk/deprecated/events');
+const { WindowTrackerTrait, windowIterator } = require('sdk/deprecated/window-utils');
 const mediator = Cc["@mozilla.org/appshell/window-mediator;1"].
             getService(Ci.nsIWindowMediator);
 
-/**
- * ChromeMod constructor
- * @constructor
- */
-exports.ChromeMod = Loader.compose(EventEmitter, {
+const ChromeMod = Loader.compose(EventEmitter, {
   on: EventEmitter.required,
   _listeners: EventEmitter.required,
   contentScript: Loader.required,
@@ -100,25 +96,22 @@ exports.ChromeMod = Loader.compose(EventEmitter, {
     //  this._emit("error", e);
   }
 });
+exports.ChromeMod = ChromeMod;
 
 const ChromeModManager = Trait.compose(
-
   EventEmitter.resolve({
     on: '_on'
   }), {
 
   constructor: function PageModRegistry() {
-    observers.add(
-      "chrome-document-global-created", 
-      this._onDocumentGlobalCreated = this._onDocumentGlobalCreated.bind(this)
+    on("chrome-document-global-created", 
+       this._onDocumentGlobalCreated = this._onDocumentGlobalCreated.bind(this)
     );
   },
 
   _destructor: function _destructor() {
-    observers.remove(
-      "chrome-document-global-created", 
-      this._onDocumentGlobalCreated
-    );
+    off("chrome-document-global-created", this._onDocumentGlobalCreated);
+
     // Empty EventEmitter
     this._removeAllListeners();
   },
@@ -165,9 +158,6 @@ const ChromeModManager = Trait.compose(
         }
       }
     }
-
   }
-
 });
-
 const chromeModManager = ChromeModManager();

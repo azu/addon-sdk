@@ -1,14 +1,13 @@
-"use strict";
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+'use strict';
 
-const { Ci, Cc } = require("chrome");
-const { ChromeMod } = require("chrome-mod");
-const { windowIterator } = require("api-utils/window-utils");
+const { Ci, Cc } = require('chrome');
+const { ChromeMod } = require('chrome-mod');
+const { windowIterator } = require('sdk/deprecated/window-utils');
 
-/* Tests for the ChromeMod APIs */
-
-exports.testChromeMod = function(test) {
-  test.waitUntilDone();
-
+exports.testChromeMod = function(assert, done) {
   let chromeMod = new ChromeMod({
     type: "navigator:browser",
 
@@ -22,17 +21,19 @@ exports.testChromeMod = function(test) {
 
     onAttach: function(worker) {
       worker.on("message", function (data) {
-        test.assertEqual(data, "bye", "get message from content script");
+        assert.equal(data, "bye", "get message from content script");
         // Search for this modified window
         for(let win in windowIterator()) {
           if (win.document.documentElement.getAttribute("chrome-mod-ok") == "true") {
-            test.done();
+            done();
             return;
           }
         }
-        test.fail("Unable to found the modified window, with 'chrome-mod-ok' attribute");
+        assert.fail("Unable to found the modified window, with 'chrome-mod-ok' attribute");
       });
       worker.postMessage("hi");
     }
   });
 };
+
+require("test").run(exports);
