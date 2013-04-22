@@ -1,6 +1,6 @@
 'use strict';
 
-const { Cc, Ci, Cu } = require('sdk/chrome');
+const { Cc, Ci, Cu } = require('chrome');
 Cu.import("resource://gre/modules/Services.jsm", this);
 
 const global = this;
