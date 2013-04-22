@@ -4,7 +4,7 @@
 'use strict';
 
 const { Cr, Cu, Ci, Cc, Cm } = require('chrome');
-const { unload } = require('./unload');
+const { unload } = require('../unload');
 const { validateOptions : validate } = require('sdk/deprecated/api-utils');
 const { uuid } = require('sdk/util/uuid');
 const { URL, isValidURI } = require('sdk/url');
