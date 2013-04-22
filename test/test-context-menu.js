@@ -6,7 +6,6 @@
 let { Cc, Ci } = require("chrome");
 
 const { Loader } = require('sdk/test/loader');
-const timer = require("sdk/timers");
 
 // These should match the same constants in the module.
 const ITEM_CLASS = "addon-context-menu-item";
@@ -3230,7 +3229,7 @@ TestHelper.prototype = {
       if (isValid && !isValid(evt))
         return;
       node.removeEventListener(event, handler, useCapture);
-      timer.setTimeout(function () {
+      setTimeout(function () {
         try {
           callback.call(self, evt);
         }

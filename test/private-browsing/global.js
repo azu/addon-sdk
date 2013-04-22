@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 'use strict';
 
-const timer = require("sdk/timers");
 const { LoaderWithHookedConsole, deactivate, pb, pbUtils } = require("./helper");
 const tabs = require("sdk/tabs");
 const { getMostRecentBrowserWindow, isWindowPrivate } = require('sdk/window/utils');
@@ -188,7 +187,7 @@ exports.testAutomaticUnload = function(test) {
   // Then switch to private mode in order to check that the previous instance
   // is correctly destroyed
   pb.once("start", function onStart() {
-    timer.setTimeout(function () {
+    setTimeout(function () {
       test.assert(!called, 
         "First private browsing instance is destroyed and inactive");
       // Must reset to normal mode, so that next test starts with it.
@@ -213,7 +212,7 @@ exports.testUnloadWhileActive = function(test) {
   let unloadHappened = false;
   ul.when(function() {
     unloadHappened = true;
-    timer.setTimeout(function() {
+    setTimeout(function() {
       pb.deactivate();
     });
   });

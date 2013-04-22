@@ -5,7 +5,6 @@
 
 const { Cc, Ci } = require('chrome');
 const { Loader } = require('sdk/test/loader');
-const timer = require('sdk/timers');
 const { StringBundle } = require('sdk/deprecated/app-strings');
 
 const base64png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYA" +
@@ -157,7 +156,7 @@ exports.testAutomaticDestroy = function(test) {
 
     // Fire a tab event and ensure that the destroyed tab is inactive
     tabs.once('open', function () {
-      timer.setTimeout(function () {
+      setTimeout(function () {
         test.assert(!called, "Unloaded tab module is destroyed and inactive");
         closeBrowserWindow(window, function() test.done());
       }, 0);
@@ -1086,7 +1085,7 @@ function openBrowserWindow(callback, url) {
         window.removeEventListener("load", onLoad, true);
         let browsers = window.document.getElementsByTagName("tabbrowser");
         try {
-          timer.setTimeout(function () {
+          setTimeout(function () {
             callback(window, browsers[0]);
           }, 10);
         }

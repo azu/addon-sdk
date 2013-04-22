@@ -1,14 +1,12 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 'use strict';
 
 const { isTabOpen, activateTab, openTab,
         closeTab, getURI } = require('sdk/tabs/utils');
 const windows = require('sdk/deprecated/window-utils');
 const { Loader } = require('sdk/test/loader');
-const { setTimeout } = require('sdk/timers');
 const { is } = require('sdk/system/xul-app');
 const tabs = require('sdk/tabs');
 

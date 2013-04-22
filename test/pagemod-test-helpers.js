@@ -1,11 +1,9 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 "use strict";
 
 const {Cc,Ci} = require("chrome");
-const timer = require("sdk/timers");
 const xulApp = require("sdk/system/xul-app");
 const { Loader } = require("sdk/test/loader");
 const { openTab, getBrowserForTab, closeTab } = require("sdk/tabs/utils");
@@ -52,7 +50,7 @@ exports.testPageMod = function testPageMod(test, testURL, pageModOptions,
     // load event. So page-mod actions may not be already done.
     // If we delay even more contentScriptWhen:'end', we may want to modify
     // this code again.
-    timer.setTimeout(testCallback, 0,
+    setTimeout(testCallback, 0,
       b.contentWindow.wrappedJSObject, 
       function done() {
         pageMods.forEach(function(mod) mod.destroy());

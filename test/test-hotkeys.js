@@ -1,13 +1,11 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 "use strict";
 
 const { Hotkey } = require("sdk/hotkeys");
 const { keyDown } = require("sdk/dom/events/keys");
 const { Loader } = require('sdk/test/loader');
-const timer = require("sdk/timers");
 const winUtils = require("sdk/deprecated/window-utils");
 
 exports["test hotkey: function key"] = function(assert, done) {
@@ -153,7 +151,7 @@ exports["test hotkey: automatic destroy"] = function(assert, done) {
   // Ensure that the hotkey is really destroyed
   keyDown(element, "accel-shift-x");
   
-  timer.setTimeout(function () {
+  setTimeout(function () {
     assert.ok(!called, "Hotkey is destroyed and not called.");
     done();
   }, 0);

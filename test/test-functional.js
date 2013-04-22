@@ -2,8 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
-const { setTimeout } = require('sdk/timers');
 const utils = require('sdk/lang/functional');
 const { invoke, defer, partial, compose, memoize, once, delay, wrap } = utils;
 const { LoaderWithHookedConsole } = require('sdk/test/loader');

@@ -1,13 +1,11 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 "use strict";
 
 const { Cc, Ci, Cu } = require("chrome");
 const AddonInstaller = require("sdk/addon/installer");
 const observers = require("sdk/deprecated/observer-service");
-const { setTimeout } = require("sdk/timers");
 const tmp = require("sdk/test/tmp-file");
 const system = require("sdk/system");
 
