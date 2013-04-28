@@ -23,7 +23,7 @@ def mkzipdir(zf, path):
 
 def build_xpi(template_root_dir, manifest, xpi_path,
               harness_options, limit_to=None, extra_harness_options={},
-              bundle_sdk=True):
+              bundle_sdk=True, pkgdir=""):
     IGNORED_FILES = [".hgignore", ".DS_Store", "install.rdf",
                      "application.ini", xpi_path]
 
@@ -46,25 +46,29 @@ def build_xpi(template_root_dir, manifest, xpi_path,
         del harness_options['icon64']
 
     # chrome.manifest
-    if os.path.isfile(os.path.join('chrome.manifest')):
-      zf.write(str('chrome.manifest'), 'chrome.manifest')
+    if os.path.isfile(os.path.join(pkgdir, 'chrome.manifest')):
+      files_to_copy['chrome.manifest'] = os.path.join(pkgdir, 'chrome.manifest')
 
-    # chrome:// folders
-    for folder in ['content', 'skin']:
-      if os.path.exists(os.path.join(folder)):
-        zf.write(str(folder), folder)
-        # cp -r folder
-        abs_dirname = os.path.join(folder)
-        for dirpath, dirnames, filenames in os.walk(abs_dirname):
-            goodfiles = list(filter_filenames(filenames, IGNORED_FILES))
-            dirnames[:] = filter_dirnames(dirnames)
-            for filename in goodfiles:
-                abspath = os.path.join(dirpath, filename)
-                arcpath = ZIPSEP.join(
-                    [folder,
-                     make_zipfile_path(abs_dirname, os.path.join(dirpath, filename)),
-                     ])
-                files_to_copy[str(arcpath)] = str(abspath)
+    # chrome folder (would contain content, skin, and locale folders typically)
+    folder = 'chrome'
+    if os.path.exists(os.path.join(pkgdir, folder)):
+      dirs_to_create.add('chrome')
+      # cp -r folder
+      abs_dirname = os.path.join(pkgdir, folder)
+      for dirpath, dirnames, filenames in os.walk(abs_dirname):
+          goodfiles = list(filter_filenames(filenames, IGNORED_FILES))
+          dirnames[:] = filter_dirnames(dirnames)
+          for dirname in dirnames:
+            arcpath = make_zipfile_path(template_root_dir,
+                                        os.path.join(dirpath, dirname))
+            dirs_to_create.add(arcpath)
+          for filename in goodfiles:
+              abspath = os.path.join(dirpath, filename)
+              arcpath = ZIPSEP.join(
+                  [folder,
+                   make_zipfile_path(abs_dirname, os.path.join(dirpath, filename)),
+                   ])
+              files_to_copy[str(arcpath)] = str(abspath)
 
     # Handle simple-prefs
     if 'preferences' in harness_options:
