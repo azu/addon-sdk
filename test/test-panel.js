@@ -120,9 +120,11 @@ exports["test Document Reload"] = function(assert, done) {
 
   let content =
     "<script>" +
-    "setTimeout(function () {" +
-    "  window.location = 'about:blank';" +
-    "}, 250);" +
+    "window.onload = function() {" +
+    "  setTimeout(function () {" +
+    "    window.location = 'about:blank';" +
+    "  }, 0);" +
+    "}" +
     "</script>";
   let messageCount = 0;
   let panel = Panel({
@@ -132,7 +134,7 @@ exports["test Document Reload"] = function(assert, done) {
     onMessage: function (message) {
       messageCount++;
       if (messageCount == 1) {
-        assert.ok(/data:text\/html/.test(message), "First document had a content script");
+        assert.ok(/data:text\/html/.test(message), "First document had a content script " + message);
       }
       else if (messageCount == 2) {
         assert.equal(message, "about:blank", "Second document too");
@@ -141,6 +143,7 @@ exports["test Document Reload"] = function(assert, done) {
       }
     }
   });
+  assert.pass('Panel was created');
 };
 
 exports["test Parent Resize Hack"] = function(assert, done) {
@@ -453,6 +456,24 @@ exports["test Panel Text Color"] = function(assert, done) {
     done();
   });
 };
+
+// Bug 866333
+exports["test watch event name"] = function(assert, done) {
+  const { Panel } = require('sdk/panel');
+
+  let html = "<html><head><style>body {color: yellow}</style></head>" +
+             "<body><p>Foo</p></body></html>";
+
+  let panel = Panel({
+    contentURL: "data:text/html;charset=utf-8," + encodeURI(html),
+    contentScript: "self.port.emit('watch', 'test');"
+  });
+  panel.port.on("watch", function (msg) {
+    assert.equal(msg, "test", 'watch event name works');
+    panel.destroy();
+    done();
+  });
+}
 
 // Bug 696552: Ensure panel.contentURL modification support
 exports["test Change Content URL"] = function(assert, done) {
