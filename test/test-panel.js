@@ -867,6 +867,38 @@ else if (isGlobalPBSupported) {
   }
 }
 
+exports.testPanelWithTitle = function(assert, done) {
+  let panelTitle = 'Panelwerld!';
+
+  let panel = require("sdk/panel").Panel({
+    contentURL: 'about:buildconfig',
+    contentScript: 'self.postMessage("")',
+    contentScriptWhen: 'ready',
+    title: panelTitle,
+    onMessage: function() {
+      panel.show();
+    },
+    onShow: function () {
+      assert.pass("the panel was shown");
+      assert.equal(panel.title, panelTitle, "the panel's title attribute is right");
+      let panelEle = getMostRecentBrowserWindow().document.getElementById('mainPopupSet').lastChild;
+      assert.equal(panelEle.getAttribute('label'), panelTitle, 'the label was set');
+      assert.equal(panelEle.getAttribute('titlebar'), 'normal', 'the titlebar was set');
+      assert.equal(panelEle.getAttribute('noautohide'), 'true', 'the noautohide was set');
+      assert.equal(panelEle.getAttribute('close'), 'true', 'the close was set');
+      //panel.hide();
+    },
+    onHide: function () {
+      assert.pass("panel hidden");
+      done();
+    }
+  });
+
+  panel.on('error', function(e) {
+    assert.fail('error was emitted:' + e.message + '\n' + e.stack);
+  });
+};
+
 try {
   require("sdk/panel");
 }
@@ -881,4 +913,4 @@ catch (e) {
   }
 }
 
-require("test").run(exports);
+require("sdk/test").run(exports);
