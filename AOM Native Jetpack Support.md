@@ -26,7 +26,7 @@ like [these current test add-ons](https://github.com/mozilla/addon-sdk/tree/1.15
 * [Scratchpad](https://developer.mozilla.org/docs/Tools/Scratchpad) = A Firefox DevTool for text editing.
 * Third Party Modules = Modules made by extensions developers which are not part of the SDK.
 * [NPM](https://npmjs.org/) = Node Package Manager
-* [JPM]((https://github.com/jsantell/jpm)) = Jetpack Package Manager
+* [JPM](https://github.com/jsantell/jpm) = Jetpack Package Manager
 * CFX / Cuddlefish = The existing python command line tool to run, xpi, test, and do more for current Jetpack bootstrap extensions.
 
 # Use Cases
